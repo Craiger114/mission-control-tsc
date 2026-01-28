@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#00ffe1" />
+  <title>Mission Secure: Command Systems (Level 3)</title>
+
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(circle at center, #00111a, #000);
+      color:#00ffe1;
+      text-align:center;
+      padding: 12px;
+    }
+    h1{ margin: 8px 0 6px; font-size: 22px; }
+    #wrap{ max-width: 1050px; margin: 0 auto; }
+    #gameBox{
+      border:2px solid #00ffe1;
+      padding: 14px;
+      background: rgba(0,20,30,.9);
+      box-shadow:0 0 20px #00ffe1;
+      border-radius: 12px;
+      text-align: left;
+    }
+    .center { text-align:center; }
+    #scenario{ font-size: 18px; margin: 10px 0 14px; text-align:center; }
+    #hud{ margin-top: 10px; font-size: 14px; opacity: .95; text-align:center; }
+    .row{ display:flex; justify-content:center; gap:10px; flex-wrap: wrap; margin-top: 10px; }
+    button{
+      padding: 12px 14px;
+      margin: 6px;
+      background:#002b36;
+      color:#00ffe1;
+      border:1px solid #00ffe1;
+      cursor:pointer;
+      font-size: 14px;
+      border-radius: 10px;
+      min-width: 220px;
+    }
+    button:hover{ background:#004d40; }
+    button:disabled{ opacity: .45; cursor:not-allowed; }
+    #buttons{ display:flex; flex-wrap: wrap; justify-content:center; gap: 6px; }
+
+    .small{ font-size: 12px; opacity: .9; margin-top: 8px; text-align:center; }
+
+    /* Meter bars */
+    .meters { max-width: 860px; margin: 0 auto; }
+    .meterRow { display:flex; gap:10px; align-items:center; margin: 8px 0; }
+    .meterLabel { width: 95px; text-align:right; font-size: 13px; opacity: .95; }
+    .barWrap { flex: 1; border:1px solid rgba(0,255,225,.6); border-radius: 999px; height: 14px; overflow:hidden; background: rgba(0,0,0,.25); }
+    .barFill { height: 100%; width: 100%; background: rgba(0,255,225,.65); }
+    .meterValue { width: 46px; text-align:left; font-size: 13px; }
+
+    /* Network map */
+    #map{ margin-top: 10px; font-size: 14px; text-align:center; }
+    .node{
+      padding: 6px 10px;
+      border:1px solid #00ffe1;
+      display:inline-block;
+      margin: 6px 6px 0 0;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .infected{ color:#ff4d4d; border-color:#ff4d4d; }
+
+    #toast{
+      position: fixed; left: 50%; transform: translateX(-50%);
+      bottom: 16px; background: rgba(0,0,0,.82);
+      border: 1px solid #00ffe1; padding: 10px 12px;
+      border-radius: 12px; display:none; max-width: 92vw;
+      text-align: center;
+    }
+
+    /* Role cards */
+    .roleCard{
+      min-width: 260px;
+      max-width: 320px;
+      border: 1px solid rgba(0,255,225,.45);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(0,0,0,.20);
+      text-align: left;
+    }
+    .roleCard h3{ margin: 0 0 6px; font-size: 16px; }
+    .roleCard ul{ margin: 6px 0 0 18px; padding:0; font-size: 13px; opacity: .95; }
+    .pill{
+      display:inline-block; padding: 2px 8px; border:1px solid rgba(0,255,225,.6);
+      border-radius: 999px; font-size: 12px; opacity: .95; margin-left: 6px;
+    }
+
+    /* Name entry (no prompt()) */
+    #nameEntry{
+      display:none;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(0,255,225,.25);
+      border-radius: 12px;
+      background: rgba(0,0,0,.25);
+      text-align:center;
+    }
+    #teamNameInput{
+      width: min(420px, 92%);
+      padding: 10px 12px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: 1px solid #00ffe1;
+      background:#00111a;
+      color:#00ffe1;
+      outline: none;
+      font-size: 14px;
+    }
+    #teamNameInput::placeholder{ color: rgba(0,255,225,.65); }
+
+    /* Reflection */
+    #reflection{
+      display:none;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(0,255,225,.25);
+      border-radius: 12px;
+      background: rgba(0,0,0,.25);
+    }
+    #reflection h3{ margin: 0 0 8px; text-align:center; }
+    #reflection ol{ margin: 8px auto 0; max-width: 860px; }
+    #reflection li{ margin: 6px 0; font-size: 14px; opacity: .95; }
+
+    /* Leaderboard */
+    #leaderboard{
+      margin-top: 12px;
+      text-align:left;
+      border-top: 1px solid rgba(0,255,225,.25);
+      padding-top: 10px;
+      display:none;
+    }
+    table{
+      width:100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    th, td{
+      border-bottom: 1px solid rgba(0,255,225,.2);
+      padding: 8px 6px;
+    }
+    th{ text-align:left; opacity:.95; }
+  </style>
+</head>
+
+<body>
+  <div id="wrap">
+    <h1 class="center">🚀 Mission Secure: Command Systems</h1>
+    <div class="small">Run a space station under pressure. Keep <b>Power</b>, <b>Network</b>, and <b>Security</b> above 0.</div>
+
+    <div class="row" id="roleRow">
+      <div class="roleCard">
+        <h3>🧭 Commander <span class="pill">+5 score on good calls</span></h3>
+        <div class="small" style="text-align:left; margin:0;">
+          You decide priorities and tradeoffs.
+        </div>
+        <ul>
+          <li>Best for: leading discussion</li>
+          <li>Bonus: +5 score when you gain score</li>
+        </ul>
+        <button onclick="selectRole('commander')">Select Commander</button>
+      </div>
+
+      <div class="roleCard">
+        <h3>💻 IT Officer <span class="pill">-50% power damage</span></h3>
+        <div class="small" style="text-align:left; margin:0;">
+          You stabilize systems and uptime.
+        </div>
+        <ul>
+          <li>Best for: troubleshooting mindset</li>
+          <li>Bonus: power hits reduced by half</li>
+        </ul>
+        <button onclick="selectRole('it')">Select IT Officer</button>
+      </div>
+
+      <div class="roleCard">
+        <h3>🔐 Security Officer <span class="pill">-50% security damage</span></h3>
+        <div class="small" style="text-align:left; margin:0;">
+          You prevent intrusions and contain threats.
+        </div>
+        <ul>
+          <li>Best for: threat awareness</li>
+          <li>Bonus: security hits reduced by half</li>
+        </ul>
+        <button onclick="selectRole('security')">Select Security Officer</button>
+      </div>
+    </div>
+
+    <p id="roleDisplay" class="small">Role: <b>Not selected</b></p>
+
+    <div class="row">
+      <button id="startBtn">Start Mission</button>
+      <button id="dlBtn" disabled>Download Leaderboard (CSV)</button>
+    </div>
+
+    <div id="gameBox">
+      <div id="scenario">Press <b>Start Mission</b> to begin.</div>
+
+      <div class="meters">
+        <div class="meterRow">
+          <div class="meterLabel">⚡ Power</div>
+          <div class="barWrap"><div id="barPower" class="barFill"></div></div>
+          <div class="meterValue"><span id="power">100</span>%</div>
+        </div>
+        <div class="meterRow">
+          <div class="meterLabel">🌐 Network</div>
+          <div class="barWrap"><div id="barNetwork" class="barFill"></div></div>
+          <div class="meterValue"><span id="network">100</span>%</div>
+        </div>
+        <div class="meterRow">
+          <div class="meterLabel">🔐 Security</div>
+          <div class="barWrap"><div id="barSecurity" class="barFill"></div></div>
+          <div class="meterValue"><span id="security">100</span>%</div>
+        </div>
+      </div>
+
+      <div id="hud">
+        ⭐ Score: <span id="score">0</span>
+      </div>
+
+      <div id="buttons"></div>
+      <div id="map"></div>
+
+      <div id="reflection">
+        <h3>🧠 Mission Debrief</h3>
+        <div class="small">Discuss as a team (or write quick answers). This is where the learning “locks in.”</div>
+        <ol id="reflectionList"></ol>
+      </div>
+
+      <div id="nameEntry">
+        <b>Enter Team Name</b>
+        <div class="small">Saved locally on this device.</div>
+        <input id="teamNameInput" type="text" maxlength="30" placeholder="Team Atlas" autocomplete="off" />
+        <div class="row" style="margin-top:8px;">
+          <button id="saveTeamBtn" style="min-width: 220px;">Save Score</button>
+          <button id="skipSaveBtn" style="min-width: 220px;">Skip</button>
+        </div>
+      </div>
+
+      <div id="leaderboard">
+        <b>Leaderboard</b>
+        <div class="small" style="text-align:left;">Stored on this device (offline-friendly). Download anytime.</div>
+        <table id="lbTable">
+          <thead><tr><th>Team</th><th>Score</th><th>When</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="row" style="margin-top:8px;">
+          <button id="resetLbBtn" style="min-width: 220px;">Reset Leaderboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/** ----------------------------
+ * State
+ * ---------------------------- */
+let role = null;
+
+let systems = { power: 100, network: 100, security: 100 };
+let score = 0;
+let round = 0;
+let gameActive = false;
+let infectedNode = null;
+
+const networkNodes = ["Life Support", "Comms", "Satellite Uplink", "Navigation", "Research Lab", "Power Core"];
+
+const reflections = [
+  "Which meter dropped the most (Power, Network, Security) and why?",
+  "What decision had the biggest impact on the mission outcome?",
+  "How did your role (Commander / IT / Security) change what you chose?",
+  "What would you do differently if you replayed this mission?",
+  "Which real-world job does this simulation feel most like (IT Support, Network Defense, Cybersecurity, Operations)?"
+];
+
+/** ----------------------------
+ * Scenarios (space station events)
+ * Each option: effects on meters + score + explanation
+ * ---------------------------- */
+const scenarios = [
+  {
+    title: "⚡ Power Instability",
+    text: "Power fluctuations detected across multiple modules. Non-essential lighting is flickering.",
+    options: [
+      {
+        text: "Review system logs & recent changes before acting",
+        effects: { power: 0, network: 0, security: 0 },
+        score: 18,
+        explanation: "Strong IT move: start with evidence. Logs + recent changes often reveal the root cause faster than guessing."
+      },
+      {
+        text: "Load-shed: temporarily disable non-essential systems",
+        effects: { power: +8, network: -2, security: 0 },
+        score: 12,
+        explanation: "Good mitigation: reducing load can stabilize power. Small network impact because some services may pause."
+      },
+      {
+        text: "Restart the entire station computer stack immediately",
+        effects: { power: -12, network: -10, security: -5 },
+        score: 2,
+        explanation: "Reboots can help but are risky without diagnosis—disrupts comms, navigation, and could interrupt security monitoring."
+      },
+      {
+        text: "Ignore it unless a critical system fails",
+        effects: { power: -18, network: 0, security: 0 },
+        score: 0,
+        explanation: "Ignoring early warnings often turns minor issues into outages. Proactive response is part of real IT operations."
+      },
+      {
+        text: "Run a quick hardware diagnostic on the Power Core module",
+        effects: { power: +5, network: 0, security: 0 },
+        score: 10,
+        explanation: "Solid troubleshooting: diagnostics help confirm if it’s hardware, configuration, or an environmental issue."
+      }
+    ]
+  },
+  {
+    title: "📡 Communication Request",
+    text: "A message claims to be from Mission Control: “URGENT—verify your login to prevent station lockout.”",
+    options: [
+      {
+        text: "Verify the request via a second channel (call known number / separate system)",
+        effects: { power: 0, network: 0, security: +6 },
+        score: 22,
+        explanation: "Best practice: verification prevents phishing. Security improves because you avoid credential theft."
+      },
+      {
+        text: "Report as suspicious to Security and preserve it for analysis",
+        effects: { power: 0, network: 0, security: +4 },
+        score: 18,
+        explanation: "Great: reporting builds defense and helps spot patterns. Preserving the message helps investigation."
+      },
+      {
+        text: "Click the link—it looks official and urgent",
+        effects: { power: 0, network: -8, security: -25 },
+        score: 0,
+        explanation: "Classic phishing success: urgency + legitimacy. Credentials could be stolen and used to move through the network."
+      },
+      {
+        text: "Delete it and say nothing",
+        effects: { power: 0, network: 0, security: -2 },
+        score: 6,
+        explanation: "Better than clicking, but you lose intel that could help protect the team. Quiet failures repeat."
+      },
+      {
+        text: "Forward it to everyone to warn them",
+        effects: { power: 0, network: -6, security: +1 },
+        score: 8,
+        explanation: "Intent is good, but forwarding can spread malicious links. Better: report it, then send a safe warning without the link."
+      }
+    ]
+  },
+  {
+    title: "🌐 Network Anomaly",
+    text: "Systems Monitor flags unusual traffic between Navigation and Life Support—two systems that rarely communicate directly.",
+    options: [
+      {
+        text: "Isolate the affected network segment (containment)",
+        effects: { power: -2, network: +10, security: +8 },
+        score: 22,
+        explanation: "Excellent network defense: segmentation limits spread. Minor power hit from rerouting and fallback processes."
+      },
+      {
+        text: "Block all inbound/outbound traffic immediately",
+        effects: { power: -4, network: -12, security: +6 },
+        score: 8,
+        explanation: "Overblocking can break operations. Security may improve briefly, but network availability suffers."
+      },
+      {
+        text: "Monitor longer to confirm before acting",
+        effects: { power: 0, network: -6, security: -6 },
+        score: 10,
+        explanation: "Observation helps, but delay increases risk if it’s malicious. Timing matters in incident response."
+      },
+      {
+        text: "Whitelist the traffic so it stops alerting",
+        effects: { power: 0, network: 0, security: -18 },
+        score: 0,
+        explanation: "Dangerous: whitelisting without understanding is like disabling an alarm. It can hide a real intrusion."
+      },
+      {
+        text: "Check firewall rules and recent network changes",
+        effects: { power: 0, network: +6, security: +4 },
+        score: 16,
+        explanation: "Strong operations move: rule audits and change review often uncover misconfigurations or unauthorized changes."
+      }
+    ]
+  },
+  {
+    title: "💻 System Failure Ticket",
+    text: "Crew reports: “Research Lab workstation can’t access station resources.” Productivity is dropping.",
+    options: [
+      {
+        text: "Start simple: check network cable/Wi‑Fi + restart the workstation",
+        effects: { power: -1, network: +6, security: 0 },
+        score: 16,
+        explanation: "IT support fundamentals: start with basics. Quick wins restore service fast."
+      },
+      {
+        text: "Check if the account is locked or permissions changed",
+        effects: { power: 0, network: +2, security: +6 },
+        score: 14,
+        explanation: "Good security-aware IT: access issues are common and can be caused by policy, lockouts, or misconfig."
+      },
+      {
+        text: "Reimage (wipe) the workstation immediately",
+        effects: { power: -6, network: -4, security: +2 },
+        score: 6,
+        explanation: "Reimaging is a last resort. It can work, but it’s time-consuming and may destroy evidence if there’s an infection."
+      },
+      {
+        text: "Ignore it—research isn’t mission critical",
+        effects: { power: 0, network: -10, security: 0 },
+        score: 0,
+        explanation: "Small issues accumulate. In real operations, degraded productivity can hide bigger problems like malware or misconfig."
+      },
+      {
+        text: "Ask what changed right before it broke (updates, new USB, new app)",
+        effects: { power: 0, network: +4, security: +2 },
+        score: 12,
+        explanation: "Great troubleshooting question. ‘What changed?’ is one of the fastest paths to root cause."
+      }
+    ]
+  },
+  {
+    title: "🔑 Access & Identity",
+    text: "A crew member says they forgot their password and need immediate access to Navigation tools.",
+    options: [
+      {
+        text: "Reset password securely and require MFA if available",
+        effects: { power: 0, network: 0, security: +10 },
+        score: 20,
+        explanation: "Best practice: secure reset + multi-factor reduces takeover risk on high-impact systems."
+      },
+      {
+        text: "Share your login so they can keep working",
+        effects: { power: 0, network: 0, security: -22 },
+        score: 0,
+        explanation: "Never share credentials. It destroys accountability and increases the blast radius if an account is compromised."
+      },
+      {
+        text: "Create a temporary account with least-privilege access",
+        effects: { power: 0, network: 0, security: +8 },
+        score: 16,
+        explanation: "Smart compromise: least privilege gets work done while minimizing damage if the account is abused."
+      },
+      {
+        text: "Disable password requirements temporarily to reduce lockouts",
+        effects: { power: 0, network: 0, security: -35 },
+        score: 0,
+        explanation: "This is like leaving the airlock open. Convenience is not worth the risk on critical systems."
+      },
+      {
+        text: "Escalate to Commander for prioritization and logging",
+        effects: { power: 0, network: 0, security: +4 },
+        score: 12,
+        explanation: "Good ops behavior: high-impact access changes should be logged and treated as a mission decision."
+      }
+    ]
+  },
+  {
+    title: "🦠 Ransomware Boss Event",
+    text: "ALERT: Research Lab files are encrypted. A demand appears: “Pay to restore access.” Suspicious processes are spreading.",
+    boss: true,
+    options: [
+      {
+        text: "Isolate/disconnect the infected module immediately",
+        effects: { power: -3, network: +8, security: +10 },
+        score: 28,
+        explanation: "Correct containment: isolation limits spread. Minor disruption is worth preventing station-wide compromise."
+      },
+      {
+        text: "Restore from backups after containment",
+        effects: { power: -4, network: +4, security: +8 },
+        score: 22,
+        explanation: "Backups are the real ‘undo’ button. Restore after containment so you don’t re-infect."
+      },
+      {
+        text: "Pay the ransom to restore access quickly",
+        effects: { power: -10, network: -10, security: -30 },
+        score: 0,
+        explanation: "Paying doesn’t guarantee recovery and encourages repeat attacks. You may still be compromised afterward."
+      },
+      {
+        text: "Ignore it—keep working and hope it stops",
+        effects: { power: -25, network: -20, security: -25 },
+        score: 0,
+        explanation: "Ransomware spreads fast when uncontained. Delay is how small incidents become catastrophes."
+      },
+      {
+        text: "Shut down everything immediately (hard power-off)",
+        effects: { power: -20, network: -15, security: +4 },
+        score: 4,
+        explanation: "Extreme move: can stop spread, but causes major operational loss and may corrupt systems. Usually not first choice."
+      }
+    ]
+  }
+];
+
+/** ----------------------------
+ * DOM
+ * ---------------------------- */
+const startBtn = document.getElementById("startBtn");
+const dlBtn = document.getElementById("dlBtn");
+const scenarioEl = document.getElementById("scenario");
+const buttonsEl = document.getElementById("buttons");
+const mapEl = document.getElementById("map");
+const scoreEl = document.getElementById("score");
+
+const powerEl = document.getElementById("power");
+const networkEl = document.getElementById("network");
+const securityEl = document.getElementById("security");
+const barPower = document.getElementById("barPower");
+const barNetwork = document.getElementById("barNetwork");
+const barSecurity = document.getElementById("barSecurity");
+
+const toastEl = document.getElementById("toast");
+
+const reflectionEl = document.getElementById("reflection");
+const reflectionList = document.getElementById("reflectionList");
+
+const nameEntryEl = document.getElementById("nameEntry");
+const teamNameInput = document.getElementById("teamNameInput");
+const saveTeamBtn = document.getElementById("saveTeamBtn");
+const skipSaveBtn = document.getElementById("skipSaveBtn");
+
+const leaderboardBox = document.getElementById("leaderboard");
+const lbTableBody = document.querySelector("#lbTable tbody");
+const resetLbBtn = document.getElementById("resetLbBtn");
+
+/** ----------------------------
+ * Helpers
+ * ---------------------------- */
+function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+function toast(msg, ms = 2800) {
+  toastEl.textContent = msg;
+  toastEl.style.display = "block";
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(() => (toastEl.style.display = "none"), ms);
+}
+
+function nowIso(){ return new Date().toISOString(); }
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function roleName(r){
+  if (r === "commander") return "Commander";
+  if (r === "it") return "IT Officer";
+  if (r === "security") return "Security Officer";
+  return "Not selected";
+}
+
+function updateHUD(){
+  systems.power = clamp(Math.round(systems.power), 0, 100);
+  systems.network = clamp(Math.round(systems.network), 0, 100);
+  systems.security = clamp(Math.round(systems.security), 0, 100);
+
+  powerEl.textContent = systems.power;
+  networkEl.textContent = systems.network;
+  securityEl.textContent = systems.security;
+  scoreEl.textContent = score;
+
+  barPower.style.width = systems.power + "%";
+  barNetwork.style.width = systems.network + "%";
+  barSecurity.style.width = systems.security + "%";
+
+  // subtle “danger” tint by lowering opacity if low (keeps simple)
+  barPower.style.opacity = systems.power < 35 ? "0.45" : "0.85";
+  barNetwork.style.opacity = systems.network < 35 ? "0.45" : "0.85";
+  barSecurity.style.opacity = systems.security < 35 ? "0.45" : "0.85";
+}
+
+function drawMap(){
+  mapEl.innerHTML = "<b>System Modules:</b><br/>";
+  networkNodes.forEach(n => {
+    const span = document.createElement("span");
+    span.className = "node" + (n === infectedNode ? " infected" : "");
+    span.textContent = n + (n === infectedNode ? " (INFECTED)" : "");
+    mapEl.appendChild(span);
+  });
+}
+
+function setOptions(options){
+  buttonsEl.innerHTML = "";
+  options.forEach(o => {
+    const btn = document.createElement("button");
+    btn.textContent = o.text;
+    btn.onclick = () => onChoice(o);
+    buttonsEl.appendChild(btn);
+  });
+}
+
+function showReflection(){
+  reflectionList.innerHTML = "";
+  reflections.forEach(q => {
+    const li = document.createElement("li");
+    li.textContent = q;
+    reflectionList.appendChild(li);
+  });
+  reflectionEl.style.display = "block";
+}
+
+function hideReflection(){
+  reflectionEl.style.display = "none";
+}
+
+function showNameEntry(){
+  nameEntryEl.style.display = "block";
+  teamNameInput.focus();
+}
+function hideNameEntry(){
+  nameEntryEl.style.display = "none";
+  teamNameInput.value = "";
+}
+
+/** ----------------------------
+ * Role selection
+ * ---------------------------- */
+function selectRole(r){
+  role = r;
+  document.getElementById("roleDisplay").innerHTML = 'Role: <b>' + roleName(r) + '</b>';
+  toast("Role selected: " + roleName(r), 1600);
+}
+window.selectRole = selectRole;
+
+/** ----------------------------
+ * Game flow
+ * ---------------------------- */
+function startMission(){
+  if (!role){
+    toast("Select a role first (Commander / IT / Security).", 2200);
+    return;
+  }
+  systems = { power: 100, network: 100, security: 100 };
+  score = 0;
+  round = 0;
+  infectedNode = null;
+  gameActive = true;
+
+  hideNameEntry();
+  hideReflection();
+  leaderboardBox.style.display = loadLeaderboard().length ? "block" : "none";
+
+  scenarioEl.innerHTML = "<b>Mission started.</b> Systems are stable—stay alert.";
+  setOptions([]);
+  updateHUD();
+  drawMap();
+
+  // small delay for readability
+  setTimeout(nextStep, 350);
+}
+
+function nextStep(){
+  if (!gameActive) return;
+
+  // Fail condition: any system hits 0
+  if (systems.power <= 0 || systems.network <= 0 || systems.security <= 0){
+    finishMission("🚨 Critical system failure. Mission lost.");
+    return;
+  }
+
+  if (round >= scenarios.length){
+    finishMission("✅ Mission complete. Station stabilized.");
+    return;
+  }
+
+  const s = scenarios[round];
+  scenarioEl.innerHTML = "<b>" + s.title + "</b><br/>" + s.text;
+
+  // In boss event, show an infected module for flavor
+  if (s.boss){
+    infectedNode = "Research Lab";
+  } else {
+    infectedNode = null;
+  }
+  drawMap();
+
+  setOptions(s.options);
+}
+
+function applyRoleModifiers(systemKey, impact){
+  // Reduce damage (negative impacts) in specialty roles
+  if (impact < 0){
+    if (role === "it" && systemKey === "power") return impact * 0.5;
+    if (role === "security" && systemKey === "security") return impact * 0.5;
+  }
+  return impact;
+}
+
+function onChoice(option){
+  if (!gameActive) return;
+
+  // Apply effects
+  const effects = option.effects || {};
+  ["power","network","security"].forEach(k => {
+    const raw = effects[k] || 0;
+    const adjusted = applyRoleModifiers(k, raw);
+    systems[k] += adjusted;
+  });
+
+  // Score + role bonus
+  let earned = option.score || 0;
+  if (earned > 0 && role === "commander") earned += 5;
+  score += earned;
+
+  updateHUD();
+  toast(option.explanation, 3600);
+
+  round += 1;
+  setTimeout(nextStep, 550);
+}
+
+function finishMission(message){
+  gameActive = false;
+  buttonsEl.innerHTML = "";
+  scenarioEl.innerHTML = "<b>" + message + "</b>";
+
+  // Show reflection + save score
+  showReflection();
+  showNameEntry();
+
+  infectedNode = null;
+  drawMap();
+}
+
+/** ----------------------------
+ * Leaderboard (localStorage)
+ * ---------------------------- */
+const LB_KEY = "mission_secure_command_systems_lb_v1";
+
+function loadLeaderboard() {
+  try { return JSON.parse(localStorage.getItem(LB_KEY) || "[]"); }
+  catch { return []; }
+}
+function saveLeaderboard(lb) {
+  localStorage.setItem(LB_KEY, JSON.stringify(lb));
+}
+function renderLeaderboard(){
+  const lb = loadLeaderboard()
+    .slice()
+    .sort((a,b) => b.score - a.score)
+    .slice(0, 25);
+
+  lbTableBody.innerHTML = "";
+  lb.forEach(e => {
+    const tr = document.createElement("tr");
+    const when = new Date(e.ts);
+    tr.innerHTML =
+      "<td>" + escapeHtml(e.team) + "</td>" +
+      "<td>" + e.score + "</td>" +
+      "<td>" + when.toLocaleString() + "</td>";
+    lbTableBody.appendChild(tr);
+  });
+
+  leaderboardBox.style.display = lb.length ? "block" : "none";
+  dlBtn.disabled = !lb.length;
+}
+
+function downloadLeaderboardCsv(){
+  const lb = loadLeaderboard();
+  if (!lb.length) return;
+
+  const rows = [["Team","Score","Timestamp","Role","Power","Network","Security"]].concat(
+    lb.map(e => [e.team, String(e.score), e.ts, e.role, String(e.power), String(e.network), String(e.security)])
+  );
+
+  const csv = rows.map(r => r.map(cell => '"' + String(cell).replaceAll('"','""') + '"').join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "mission_secure_leaderboard.csv";
+  a.click();
+}
+
+function resetLeaderboard(){
+  if (!confirm("Reset leaderboard on this device?")) return;
+  saveLeaderboard([]);
+  renderLeaderboard();
+  toast("Leaderboard reset.", 1600);
+}
+
+/** ----------------------------
+ * Events
+ * ---------------------------- */
+startBtn.addEventListener("click", startMission);
+dlBtn.addEventListener("click", downloadLeaderboardCsv);
+resetLbBtn.addEventListener("click", resetLeaderboard);
+
+saveTeamBtn.addEventListener("click", () => {
+  const team = (teamNameInput.value || "").trim() || "Team";
+  const entry = {
+    team,
+    score,
+    ts: nowIso(),
+    role: roleName(role),
+    power: systems.power,
+    network: systems.network,
+    security: systems.security
+  };
+  const lb = loadLeaderboard();
+  lb.push(entry);
+  saveLeaderboard(lb);
+  renderLeaderboard();
+  hideNameEntry();
+  toast("Score saved for " + team + ".", 1800);
+});
+
+skipSaveBtn.addEventListener("click", () => {
+  hideNameEntry();
+  toast("Score not saved.", 1400);
+});
+
+teamNameInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") saveTeamBtn.click();
+});
+
+/** ----------------------------
+ * Initial render
+ * ---------------------------- */
+updateHUD();
+drawMap();
+renderLeaderboard();
+</script>
+</body>
+</html>
